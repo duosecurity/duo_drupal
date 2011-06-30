@@ -1,0 +1,25 @@
+body{
+ margin: 0 auto;
+ font-family: "Lucida Grande","DejaVu Sans","Bitstream Vera Sans",Verdana,Arial,sans-serif;
+}
+h1 {
+  color: #222;
+  font-size: 18px;
+}
+.center{
+  text-align: center;
+}
+.italic{
+  font-style: italic;
+  color: #000;
+}
+#centered{
+  background:#fff;
+  margin: 0 auto;
+  width: 460px;
+  height: 500px;
+  display: block;
+  border: 1px solid #ccc;
+  margin-top: 20px; 
+  padding-left:20px;
+}

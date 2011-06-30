@@ -1,0 +1,4 @@
+name = Duo
+description = Protect your Drupal site with Duo Security's two-factor authentication
+core = 7.x
+configure = admin/config/system/duo
