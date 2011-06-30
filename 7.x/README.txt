@@ -12,12 +12,6 @@ Description
 This module adds Duo two-factor authentication to your Drupal site.
 
 
-Requirements
-------------
-
-PHP >= 5.1.2, PECL hash >= 1.1 required, for the hash_hmac() function.
-
-
 Installation
 ------------
 
@@ -29,7 +23,7 @@ For detailed installation and configuration instructions, please visit:
 Contact
 -------
 
-info@duosecurity.com
+Have a question? Drop us a line at info@duosecurity.com.
 
 
 Changelog
