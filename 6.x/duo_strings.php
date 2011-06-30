@@ -3,7 +3,7 @@
  * Titles
  */
   // Config title strings
-  $duo_titles['config_form'] = t('Duo two-factor authentication configuration');
+  $duo_titles['config_form'] = t('Duo two-factor configuration');
   $duo_titles['integration_key'] = t('Integration key');
   $duo_titles['secret_key'] = t('Secret key');
   $duo_titles['api_hostname'] = t('API hostname');
@@ -20,9 +20,9 @@
 
   // Config description strings
   $duo_descriptions['config_form'] = t('Setup the Duo module with your integration settings.');
-  $duo_descriptions['integration_key'] = t('Integration key from a valid integration, provided by Duo Security');
-  $duo_descriptions['secret_key'] = t('Secret key from a valid integration, provided by Duo Security');
-  $duo_descriptions['api_hostname'] = t('API hostname from a valid integration, provided by Duo Security');
+  $duo_descriptions['integration_key'] = t('Integration key from the Duo administrative interface');
+  $duo_descriptions['secret_key'] = t('Secret key from the Duo administrative interface');
+  $duo_descriptions['api_hostname'] = t('API hostname from the Duo administrative interface');
   $duo_descriptions['form_preview'] = t("Follow the link above to ensure that you have configured the module correctly.  
   If you don't see an enrollment/login form, verify that you have entered the proper keys and hostname.  If the problem persists, 
   disable the module and contact") . ' <a href="mailto:support@duosecurity.com">support@duosecurity.com</a>';

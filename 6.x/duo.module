@@ -27,9 +27,9 @@
  * Implements hook_form_FORM_ID_alter().
  */
   function duo_form_user_login_alter(&$form, &$form_state) {
-    $skey =  variable_get('duo_secretkey', '');
-    $ikey  = variable_get('duo_integrationkey', '');
-    $akey  = variable_get('duo_applicationkey', '');
+    $skey = variable_get('duo_secretkey', '');
+    $ikey = variable_get('duo_integrationkey', '');
+    $akey = variable_get('duo_applicationkey', '');
     $api  = variable_get('duo_apihostname', '');
 
     if (function_exists('hash_hmac') && $skey && $ikey && $akey && $api) {
@@ -53,25 +53,22 @@
  */
 
   function _duo_user_login_form_alter(&$form, &$form_state) {
-
     // Save the original form, so we can iterate through it while we rebuild it.
     $saveForm = $form;
     $form = array();
 
     foreach ($saveForm as $key => $value) {
       if ($key == '#validate') {
-
-        $form[ $key ] = array();
-
+        $form[$key] = array();
         foreach ( $value as $validator ) {
           if ($validator == 'user_login_authenticate_validate') {
             $validator = 'duo_login_authenticate_validate';
           }
-          $form[ $key ][] = $validator;
+          $form[$key][] = $validator;
         }
       }
       else {
-        $form[ $key ] = $value;
+        $form[$key] = $value;
       }
     }
   }
@@ -86,7 +83,6 @@
  *    returns true on success, false otherwise.
  */
   function duo_generate_second_auth($name){
-
     $skey = variable_get('duo_secretkey', '');
     $ikey = variable_get('duo_integrationkey', '');
     $akey = variable_get('duo_applicationkey', '');
@@ -147,7 +143,7 @@
     $tempUser = user_load( array( name => $form_state['values']['name'], pass => $form_state['values']['pass']));
 
     // Verify that the user exists.
-    if (!$tempUser) {  
+    if (!$tempUser) {
       drupal_set_message($duo_error['login_invalid'], 'error');
       drupal_goto();
     }
@@ -182,12 +178,11 @@
       drupal_goto();
     }
 
-    // Decrypt the name via Duo.
+    // Verify the response signature
     $duo = new Duo();
-    $skey =  variable_get('duo_secretkey', '');
-    $ikey  = variable_get('duo_integrationkey', '');
-    $akey  = variable_get('duo_applicationkey', '');
-
+    $skey = variable_get('duo_secretkey', '');
+    $ikey = variable_get('duo_integrationkey', '');
+    $akey = variable_get('duo_applicationkey', '');
 
     $name = $duo->verifyResponse($ikey, $skey, $akey, $sig_resp);
     if (!$name) {
@@ -235,7 +230,7 @@
 /**
  *  Implements hook_help.
  */
-  function  duo_help($path, $arg) {
+  function duo_help($path, $arg) {
     switch ($path) {
       case "admin/help#duo":
         return _duo_generate_help();
@@ -249,10 +244,11 @@
  */
   function duo_admin_config() {
     include('duo_strings.php');
+
     if (!function_exists("hash_hmac")) {
       drupal_set_message($duo_error['php_invalid'], 'error');
     }
-  
+
     $form['duo_integrationkey'] = array(
       '#type' => 'textfield',
       '#title' => $duo_titles['integration_key'],
@@ -277,10 +273,12 @@
       '#required' => TRUE,
     );
     
-    $skey =  variable_get('duo_secretkey', '');
-    $ikey  = variable_get('duo_integrationkey', '');
-    $akey  = variable_get('duo_applicationkey', '');
-    if ($ikey && $skey && $akey) {
+    // Attempt to load a Duo iframe to show if it has been configured properly.
+    $ikey = variable_get('duo_integrationkey', '');
+    $skey = variable_get('duo_secretkey', '');
+    $api  = variable_get('duo_apihostname', '');
+
+    if ($ikey && $skey && $api) {
       $form['preview'] = array(
         '#type' => 'item',
         '#title' => $duo_titles['form_preview'],
@@ -297,23 +295,27 @@
  */
   function duo_admin_config_validate($form, &$form_state) {
     include('duo_strings.php');
+
     $ikey = trim($form_state['values']['duo_integrationkey']);
     $skey = trim($form_state['values']['duo_secretkey']);
-    $api = trim($form_state['values']['duo_apihostname']);
+    $api  = trim($form_state['values']['duo_apihostname']);
 
+    // Verify the ikey length.
     if (drupal_strlen($ikey) != 20) {
       form_set_error('duo_integrationkey', $duo_error['invalid_ikey']);
     }
+    // Verify skey length.
     if (drupal_strlen($skey) != 40) {
       form_set_error('duo_secretkey', $duo_error['invalid_skey']);
     }
+    // Make sure url is at least long enough to be valid.
     if (drupal_strlen($api) < 15) {
       form_set_error('duo_apihostname', $duo_error['short_api']);
     }
 
     $form_state['values']['duo_integrationkey'] = $ikey;
-    $form_state['values']['duo_secretkey'] = $skey;
-    $form_state['values']['duo_apihostname'] = $api;
+    $form_state['values']['duo_secretkey']      = $skey;
+    $form_state['values']['duo_apihostname']    = $api;
   }
 
 /**
