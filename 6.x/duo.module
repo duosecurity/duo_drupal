@@ -140,7 +140,7 @@
       drupal_goto();
     }
 
-    $tempUser = user_load( array( name => $form_state['values']['name'], pass => $form_state['values']['pass']));
+    $tempUser = user_load( array( 'name' => $form_state['values']['name'], 'pass' => $form_state['values']['pass']));
 
     // Verify that the user exists.
     if (!$tempUser) {
