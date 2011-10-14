@@ -20,7 +20,7 @@
         $action = preg_match($search, $action);
       }
       
-      if (duo_generate_second_auth($account->name, $action)) {
+      if (user_access('log in with duo', $account) && duo_generate_second_auth($account->name, $action)) {
         exit();
       }
     }
