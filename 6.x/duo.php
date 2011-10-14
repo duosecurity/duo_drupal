@@ -10,26 +10,12 @@
   require_once('duo_web.php');
 
 /**
- *  Helper function to check if somebody is logged in already
- *
- *  Checks to see if a user is logged in, if they are, it'll redirect them and set an error message
- *
- *  @return void
- */
-  function _check_login() {
-    if (user_is_logged_in()) {
-      drupal_set_message( t('You are already logged in.'), 'error');
-      drupal_goto();
-    }
-  }
-
-/**
  *  Generates a random alpha numeric string.
  */
   function generate_random_string() {
-    return bin2hex(generate_random_bytes(20));    
+    return bin2hex(generate_random_bytes(20));
   }
-  
+
 /**
  *  Tries to read from /dev/urandom to create a random number of bytes.  Falls back on hashing microtime.
  */
@@ -49,7 +35,7 @@
         $output .= pack('H*', md5($random_state));
       }
       $output = substr($output, 0, $count);
-    } 
+    }
     return $output;
   }
 
@@ -69,19 +55,22 @@
  *
  *  @return HTML for the Duo page header.
  */
-  function  _duo_generate_page($sig_req, $apihostname) {
+  function  _duo_generate_page($sig_req, $apihostname, $reset = false) {
     ob_start();
 
     include('resources/duo_header.php');
 
     echo "\n\t<script src=\"" . base_path() . drupal_get_path('module', 'duo') . "/duo.js\" ></script>";
-    echo "\n\t<script>Duo.init({'host':'" . $apihostname . "','post_action':'" . 
+    echo "\n\t<script>Duo.init({'host':'" . $apihostname . "','post_action':'" .
     url("duo_login_process", array("absolute" => TRUE)) . "','sig_request':'" . $sig_req . "'});";
-    echo "\t</script>\n";
+    echo "\n\t</script>\n";
 
     echo "\t<div id=\"centered\">\n\t\t";
     echo '<iframe id="duo_iframe" width="500" height="500" frameborder="0"></iframe>';
-    echo "\n\t</div>";
+    echo "\n\t</div>\n\t";
+    echo '<form id="duo_form" method="POST">' . "\n\t\t";
+    echo '<input type="hidden" name="reset" value=' . $reset . ' />';
+    echo "\n\t</form>";
 
     include('resources/duo_footer.php');
 
@@ -101,7 +90,7 @@
     $help = '<h1>' . t("Duo Two-Factor Authentication") . '</h1>';
 
     $help .= "<p>" . t("For more complete documentation, view Duo's") . ' <a href="http://www.duosecurity.com/docs/drupal">' . t('documentation on the module') . "</a>.</p>";
-  
+
     $help .= "<p>" . t("If you need additional help, contact") . ' <a href="mailto:support@duosecurity.com">support@duosecurity.com</a>.</p>';
 
     $help .= '<h2>' . t("About") . '</h2>';
@@ -117,9 +106,9 @@
     $help .= '<p>' . t("After signing up with Duo, you will need to create an integration. ") . t("Duo offers a") . ' <a href="http://www.duosecurity.com/docs">' . t("getting started guide") . "</a> " . t("that explains how to set up an integration.") .'</p>';
 
     $help .= '<p>' . t("Upon creating an integration, you will be provided with an integration key, secret key, and API hostname. You'll need this information to configure the module.  Copy and paste the values from the Duo administrative interface into the module configuration page.") . '</p>';
-  
+
     $help .= '<p>' . t("If the Duo plugin is left unconfigured, users will continue to login as usual without two-factor authentication.") . '</p>';
-  
+
     $help .= '<h2>' . t("Customization") . '</h2>';
 
     $help .= '<p>' . t("You can customize the look of the login page by editing the files") . " duo_header.php, duo_footer.php " . t("and") . " custom.css " . t("in the module's") . " resources " . t("folder. The login form is rendered in between the header and footer files.");

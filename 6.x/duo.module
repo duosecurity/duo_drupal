@@ -8,70 +8,20 @@
   require_once('duo.php');
   require_once('duo_web.php');
 
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-  function duo_form_user_login_block_alter(&$form, &$form_state) {
-    $skey = variable_get('duo_secretkey', '');
-    $ikey = variable_get('duo_integrationkey', '');
-    $akey = variable_get('duo_applicationkey', '');
-    $api  = variable_get('duo_apihostname', '');
-
-    if (function_exists('hash_hmac') && $skey && $ikey && $akey && $api) {
-      _duo_user_login_form_alter($form, $form_state);
-    }
+  function duo_user($op, &$edit, &$account, $category = NULL) {
+  	if ($op == "login") {
+	  if (isset($_SERVER['REQUEST_URI'])) {
+	    $action = $_SERVER['REQUEST_URI'];
+		$search = "/\/user\/reset\/" . $account->uid . "/";
+		$action = preg_match($search, $action);
+	  }
+	  
+	  if (duo_generate_second_auth($account->name, $action)) {
+		exit();
+	  }
+	}
   }
 
-
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-  function duo_form_user_login_alter(&$form, &$form_state) {
-    $skey = variable_get('duo_secretkey', '');
-    $ikey = variable_get('duo_integrationkey', '');
-    $akey = variable_get('duo_applicationkey', '');
-    $api  = variable_get('duo_apihostname', '');
-
-    if (function_exists('hash_hmac') && $skey && $ikey && $akey && $api) {
-      _duo_user_login_form_alter($form, $form_state);
-    }
-  }
-
-
-/**
- *  Helper function for the hook_form_alter and hook_form_FORM_ID_alter
- *
- *  Overwrites the validation to the duo_login_authenticate_validate function.
- *
- *  @param &$form
- *    $form is the login form sent from any function that handles a login form
- *
- *  @param &$form_state
- *    $form_state is the state of the login form.  Contains the form values.
- *
- *  @return  void
- */
-
-  function _duo_user_login_form_alter(&$form, &$form_state) {
-    // Save the original form, so we can iterate through it while we rebuild it.
-    $saveForm = $form;
-    $form = array();
-
-    foreach ($saveForm as $key => $value) {
-      if ($key == '#validate') {
-        $form[$key] = array();
-        foreach ( $value as $validator ) {
-          if ($validator == 'user_login_authenticate_validate') {
-            $validator = 'duo_login_authenticate_validate';
-          }
-          $form[$key][] = $validator;
-        }
-      }
-      else {
-        $form[$key] = $value;
-      }
-    }
-  }
 
 /**
  *  Function to generate the secondary authentication form
@@ -82,7 +32,7 @@
  *  @return boolean
  *    returns true on success, false otherwise.
  */
-  function duo_generate_second_auth($name){
+  function duo_generate_second_auth($name, $action){
     $skey = variable_get('duo_secretkey', '');
     $ikey = variable_get('duo_integrationkey', '');
     $akey = variable_get('duo_applicationkey', '');
@@ -92,10 +42,15 @@
     if (!($skey && $ikey && $akey && $api)) {
       return FALSE;
     }
+	
+	global $user;
+	$user = drupal_anonymous_user();
+	session_destroy();
 
     $duo = new Duo();
     $sig_req = $duo->signRequest($ikey, $skey, $akey, $name);
-    echo _duo_generate_page($sig_req, $api);
+
+    echo _duo_generate_page($sig_req, $api, $action);
     return TRUE;
   }
 
@@ -111,57 +66,7 @@
     echo $duo_error['bad_configuration'];
   }
 
-/**
- *  Validates the login form.
- *
- *  Doesn't actually log the user in.  Avoids creating a user session,
- *  so that a user can't interrupt the process and gain access.
- *
- *  @param $form
- *    $form is the login form
- *
- *  @param &$form_state
- *    $form_state contains the most recent values of the login form.
- *
- *  @return void
- */
-  function duo_login_authenticate_validate($form, &$form_state) {
-    include('duo_strings.php');
-
-    // Sanity check to make sure we're not revalidating somebody.
-    _check_login();
-
-    user_login_name_validate($form, $form_state);
-
-    // Get any errors from the name validation
-    // then redirect and display any errors.
-    $errors = drupal_get_messages('error', FALSE);
-    if (isset($errors['error'])) {
-      drupal_goto();
-    }
-
-    $tempUser = user_load( array( 'name' => $form_state['values']['name'], 'pass' => $form_state['values']['pass']));
-
-    // Verify that the user exists.
-    if (!$tempUser) {
-      drupal_set_message($duo_error['login_invalid'], 'error');
-      drupal_goto();
-    }
-    
-    // See if the user can log in with Duo, if they can't, log them in regularly.
-    if (user_access('log in with duo', $tempUser) && duo_generate_second_auth($tempUser->name)) {
-      exit();
-    }
-
-    // If we didn't exit, we need to log the user in.
-    global $user;
-    $user = $tempUser;
-    user_authenticate_finalize($form_state['values']);
-    drupal_goto();
-  }
-
-
-/**
+ /**
  *  Logs the user from the Duo form post
  *
  *  Actually processes the login information, and 
@@ -169,10 +74,9 @@
  */
   function duo_login_process() {
     include('duo_strings.php');
-
-    _check_login();
-
+	
     $sig_resp = trim($_POST['sig_response']);
+    $action = trim($_POST['reset']);
     if (!$sig_resp) {
       drupal_set_message($duo_error['tfa_not_recieved'], 'error' );
       drupal_goto();
@@ -192,25 +96,12 @@
 
     global $user;
     $user = user_load(array('name' => $name));
-
-    $values['uid'] = $user->uid;
-    $values['values']['name'] = $name;
-    user_authenticate_finalize($values);
-    
-    drupal_goto();
-  }
-
-
-/**
- *  Implements hook_user().
- *
- *  Checks to see if a new user is created, enrolls them if they are required.
- */
-  function duo_user($op, &$edit, &$account, $category = NULL) {
-    global $user;
-    if ($op == "insert" && $user->name == NULL && function_exists('hash_hmac') && duo_generate_second_auth($account->name)) { 
-      exit();
-    }
+	sess_regenerate();
+   	if ($action == true) {
+		drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to login. Please change your password.'));
+		drupal_goto("user/" . $user->uid . "/edit");
+	}
+	drupal_goto();
   }
 
 
