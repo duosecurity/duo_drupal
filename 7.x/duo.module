@@ -357,7 +357,7 @@
   function duo_permission() {
     include('duo_strings.php');
     return array(
-      'login with duo' => array(
+      'log in with duo' => array(
         'title' => $duo_titles['permission'],
         'description' => $duo_descriptions['permission'],
       )
