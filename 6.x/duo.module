@@ -8,18 +8,22 @@
   require_once('duo.php');
   require_once('duo_web.php');
 
+
+/**
+ *  Implements hook_user
+ */
   function duo_user($op, &$edit, &$account, $category = NULL) {
-  	if ($op == "login") {
-	  if (isset($_SERVER['REQUEST_URI'])) {
-	    $action = $_SERVER['REQUEST_URI'];
-		$search = "/\/user\/reset\/" . $account->uid . "/";
-		$action = preg_match($search, $action);
-	  }
-	  
-	  if (duo_generate_second_auth($account->name, $action)) {
-		exit();
-	  }
-	}
+    if ($op == "login") {
+      if (isset($_SERVER['REQUEST_URI'])) {
+        $action = $_SERVER['REQUEST_URI'];
+        $search = "/\/user\/reset\/" . $account->uid . "/";
+        $action = preg_match($search, $action);
+      }
+      
+      if (duo_generate_second_auth($account->name, $action)) {
+        exit();
+      }
+    }
   }
 
 
@@ -42,10 +46,10 @@
     if (!($skey && $ikey && $akey && $api)) {
       return FALSE;
     }
-	
-	global $user;
-	$user = drupal_anonymous_user();
-	session_destroy();
+    
+    global $user;
+    $user = drupal_anonymous_user();
+    session_destroy();
 
     $duo = new Duo();
     $sig_req = $duo->signRequest($ikey, $skey, $akey, $name);
@@ -66,7 +70,7 @@
     echo $duo_error['bad_configuration'];
   }
 
- /**
+/**
  *  Logs the user from the Duo form post
  *
  *  Actually processes the login information, and 
@@ -74,7 +78,7 @@
  */
   function duo_login_process() {
     include('duo_strings.php');
-	
+    
     $sig_resp = trim($_POST['sig_response']);
     $action = trim($_POST['reset']);
     if (!$sig_resp) {
@@ -96,12 +100,13 @@
 
     global $user;
     $user = user_load(array('name' => $name));
-	sess_regenerate();
-   	if ($action == true) {
-		drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to login. Please change your password.'));
-		drupal_goto("user/" . $user->uid . "/edit");
-	}
-	drupal_goto();
+    sess_regenerate();
+    
+    if ($action == true) {
+        drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to login. Please change your password.'));
+        drupal_goto("user/" . $user->uid . "/edit");
+    }
+    drupal_goto();
   }
 
 
