@@ -9,29 +9,17 @@
   require_once('duo.php');
 
 
-
 /**
- *  Validates the login form.
- *
- *  Doesn't actually log the user in.  Avoids creating a user session,
- *  so that a user can't interrupt the process and gain access.
- *
- *  @param $form
- *    $form is the login form
- *
- *  @param &$form_state
- *    $form_state contains the most recent values of the login form.
- *
- *  @return void
+ *  Implements hook_user_login()
  */
   function duo_user_login(&$edit, $account) {
     include('duo_strings.php');
-	
-	if (isset($_GET['q'])) {
-		$action = $_GET['q'];
-		$search = "/user\/reset\/" . $account->uid . "\//";
-		$action = preg_match($search, $action);
-	}
+    
+    if (isset($_GET['q'])) {
+    	$action = $_GET['q'];
+    	$search = "/user\/reset\/" . $account->uid . "\//";
+    	$action = preg_match($search, $action);
+    }
     
     if (user_access("log in with duo", $account) && duo_generate_second_auth($account->name, $action)) {
       drupal_exit();
@@ -57,9 +45,9 @@
         return FALSE;
     }
 
-	global $user;
-	$user = drupal_anonymous_user();
-	session_destroy();
+    global $user;
+    $user = drupal_anonymous_user();
+    session_destroy();
 
     $duo = new Duo();
     $sig_req = $duo->signRequest($ikey, $skey, $akey, $name);
@@ -89,7 +77,7 @@
 
     // Get the $_POST variable.
     $sig_resp = trim($_POST['sig_response']);
-	$action = trim($_POST['reset']);
+    $action = trim($_POST['reset']);
     if (!$sig_resp) {
       drupal_set_message($duo_error['tfa_not_recieved'], 'error' );
       drupal_goto();
@@ -101,7 +89,7 @@
     $akey = variable_get('duo_applicationkey', '');
 
     $name = $duo->verifyResponse($ikey, $skey, $akey, $sig_resp);
-	if (!$name || !user_load_by_name($name)) {
+    if (!$name || !user_load_by_name($name)) {
       drupal_set_message($duo_error['tfa_invalid'], 'error' );
       drupal_goto();
     }
@@ -111,11 +99,11 @@
 
     watchdog('user', 'User %name has authenticated with Duo.', array('%name' => $user->name));
     drupal_session_regenerate();
-	if ($action == true) {
-        $token = drupal_hash_base64(drupal_random_bytes(55));
-        $_SESSION['pass_reset_' . $user->uid] = $token;
-		drupal_goto("user/" . $user->uid . "/edit", array("query" => array("password-reset-token" => $token)));
-	}
+    if ($action == true) {
+      $token = drupal_hash_base64(drupal_random_bytes(55));
+      $_SESSION['pass_reset_' . $user->uid] = $token;
+      drupal_goto("user/" . $user->uid . "/edit", array("query" => array("password-reset-token" => $token)));
+    }
     drupal_goto();
   }
 
