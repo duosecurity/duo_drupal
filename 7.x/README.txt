@@ -1,7 +1,7 @@
 ** Duo Two-Factor Authentication Module **
 
 Drupal Version:  7.x
-Module Version: 1.5
+Module Version: 1.8
 Contributors:  Duo Security
 Contact:  info@duosecurity.com
 
@@ -37,6 +37,9 @@ Changelog
 1.4 - Bug fix, naming + translation issues.
 1.5 - Major update to login method, add support for custom login style, moved preview to new page, 
       and adds a duo_strings for constistant naming between the 6.x and 7.x module
+1.6 - Bug fix, fix permissions typo, protect forgot password with TFA
+1.7 - Bug fix, fix an issue with password resets.
+1.8 - Add support for Duo's new enrollment frame.
 
 
 File List
