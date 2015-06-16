@@ -65,7 +65,8 @@
     url("duo_login_process", array("absolute" => TRUE)) . "','sig_request':'" . $sig_req . "'});";
     echo "\n\t</script>\n";
 
-    echo '<iframe id="duo_iframe" width="620" height="500" frameborder="0" class="centered"></iframe>';
+    echo '<style> body {text-align: center;} iframe {width: 100%; min-width: 304px; max-width: 620px; height: 330px;}</style>';
+    echo '<iframe id="duo_iframe" frameborder="0"></iframe>';
     echo '<form id="duo_form" method="POST">' . "\n\t\t";
     echo '<input type="hidden" name="reset" value=' . $reset . ' />';
     echo "\n\t</form>";
