@@ -1,32 +1,30 @@
 <?php
-// $Id: duo.install,v 1.0 2011/06/09 13:50:37 duosecurity Exp $
-
 
 /**
- *  @file
- *  The install file for the Duo module.
+ * @file
+ * The install file for the Duo module.
  */
 
-  require_once('duo.php');
+require_once 'duo.php';
 
 /**
  * Implements hook_install().
  */
-  function duo_install() {
-    variable_set("duo_applicationkey", generate_random_string());
+function duo_install() {
+  variable_set("duo_applicationkey", generate_random_string());
 
-    db_update('system')
+  db_update('system')
       ->fields(array('weight' => 4000))
       ->condition('name', 'duo', '=')
       ->execute();
-  }
+}
 
 /**
  * Implements hook_uninstall().
  */
-  function duo_uninstall() {
-    variable_del('duo_secretkey');
-    variable_del('duo_integrationkey');
-    variable_del('duo_applicationkey');
-    variable_del('duo_apihostname');
-  }
+function duo_uninstall() {
+  variable_del('duo_secretkey');
+  variable_del('duo_integrationkey');
+  variable_del('duo_applicationkey');
+  variable_del('duo_apihostname');
+}

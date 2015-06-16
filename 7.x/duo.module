@@ -1,285 +1,286 @@
 <?php
 
 /**
- *  @file
- *  A module to add Duo's two factor authentication to the login process.
+ * @file
+ * A module to add Duo's two factor authentication to the login process.
  */
 
-  require_once('duo_web.php');
-  require_once('duo.php');
+require_once 'duo_web.php';
+require_once 'duo.php';
 
 
 /**
- *  Implements hook_user_login()
+ * Implements hook_user_login().
  */
-  function duo_user_login(&$edit, $account) {
-    include('duo_strings.php');
-    
-    if (isset($_GET['q'])) {
-    	$action = $_GET['q'];
-    	$search = "/user\/reset\/" . $account->uid . "\//";
-    	$action = preg_match($search, $action);
-    }
-    
-    if (user_access("log in with duo", $account) && duo_generate_second_auth($account->name, $action)) {
-      drupal_exit();
-    }
+function duo_user_login(&$edit, $account) {
+  include 'duo_strings.php';
+
+  $action = "";
+  if (isset($_GET['q'])) {
+    $action = $_GET['q'];
+    $search = "/user\/reset\/" . $account->uid . "\//";
+    $action = preg_match($search, $action);
   }
 
+  if (user_access("log in with duo", $account) && duo_generate_second_auth($account->name, $action)) {
+    drupal_exit();
+  }
+}
+
 /**
- *  Generates the secondary auth form.
+ * Generates the secondary auth form.
  *
- *  @param $name
+ * @param string $name
  *    Username of the user logging in.
  *
- *  @return void
+ * @return bool
+ *    returns true on success, false otherwise.
  */
-  function duo_generate_second_auth($name, $action) {
-    $ikey = variable_get('duo_integrationkey', '');
-    $skey = variable_get('duo_secretkey', '');
-    $akey = variable_get('duo_applicationkey', '');
-    $api  = variable_get('duo_apihostname', '');
+function duo_generate_second_auth($name, $action) {
+  $ikey = variable_get('duo_integrationkey', '');
+  $skey = variable_get('duo_secretkey', '');
+  $akey = variable_get('duo_applicationkey', '');
+  $api  = variable_get('duo_apihostname', '');
 
-    // Sanity check for variables before signRequest.
-    if (!($skey && $ikey && $akey && $api)) {
-        return FALSE;
-    }
-
-    global $user;
-    $user = drupal_anonymous_user();
-    session_destroy();
-
-    $duo = new Duo();
-    $sig_req = $duo->signRequest($ikey, $skey, $akey, $name);
-      
-    echo _duo_generate_page($sig_req, $api, $action);
-    return TRUE;
+  // Sanity check for variables before signRequest.
+  if (!($skey && $ikey && $akey && $api)) {
+    return FALSE;
   }
 
-/**
- *  Menu callback function to load a preview of the Login Form.
- */
-  function duo_preview_second_auth() {
-    include('duo_strings.php');
-    global $user;
-    if (!duo_generate_second_auth($user->name)){
-      echo $duo_error['bad_configuration'];
-    }
-  }
+  global $user;
+  $user = drupal_anonymous_user();
+  session_destroy();
+
+  $duo = new Duo();
+  $sig_req = $duo->signRequest($ikey, $skey, $akey, $name);
+
+  echo _duo_generate_page($sig_req, $api, $action);
+  return TRUE;
+}
 
 /**
- *  Logs the user from the Duo form post.
+ * Menu callback function to load a preview of the Login Form.
+ */
+function duo_preview_second_auth() {
+  include 'duo_strings.php';
+  global $user;
+  if (!duo_generate_second_auth($user->name)) {
+    echo $duo_error['bad_configuration'];
+  }
+}
+
+/**
+ * Logs the user from the Duo form post.
  *
  *  Processes the login information, and loads a user account if successful.
  */
-  function duo_login_process() {
-    include('duo_strings.php');
+function duo_login_process() {
+  include 'duo_strings.php';
 
-    // Get the $_POST variable.
-    $sig_resp = trim($_POST['sig_response']);
-    $action = trim($_POST['reset']);
-    if (!$sig_resp) {
-      drupal_set_message($duo_error['tfa_not_recieved'], 'error' );
-      drupal_goto();
-    }
-
-    $duo = new Duo();
-    $ikey = variable_get('duo_integrationkey', '');
-    $skey = variable_get('duo_secretkey', '');
-    $akey = variable_get('duo_applicationkey', '');
-
-    $name = $duo->verifyResponse($ikey, $skey, $akey, $sig_resp);
-    if (!$name || !user_load_by_name($name)) {
-      drupal_set_message($duo_error['tfa_invalid'], 'error' );
-      drupal_goto();
-    }
- 
-    global $user;
-    $user = user_load_by_name($name);
-
-    watchdog('user', 'User %name has authenticated with Duo.', array('%name' => $user->name));
-    drupal_session_regenerate();
-    if ($action == true) {
-      $token = drupal_hash_base64(drupal_random_bytes(55));
-      $_SESSION['pass_reset_' . $user->uid] = $token;
-      drupal_goto("user/" . $user->uid . "/edit", array("query" => array("pass-reset-token" => $token)));
-    }
+  // Get the $_POST variable.
+  $sig_resp = trim($_POST['sig_response']);
+  $action = trim($_POST['reset']);
+  if (!$sig_resp) {
+    drupal_set_message($duo_error['tfa_not_recieved'], 'error');
     drupal_goto();
   }
+
+  $duo = new Duo();
+  $ikey = variable_get('duo_integrationkey', '');
+  $skey = variable_get('duo_secretkey', '');
+  $akey = variable_get('duo_applicationkey', '');
+
+  $name = $duo->verifyResponse($ikey, $skey, $akey, $sig_resp);
+  if (!$name || !user_load_by_name($name)) {
+    drupal_set_message($duo_error['tfa_invalid'], 'error');
+    drupal_goto();
+  }
+
+  global $user;
+  $user = user_load_by_name($name);
+
+  watchdog('user', 'User %name has authenticated with Duo.', array('%name' => $user->name));
+  drupal_session_regenerate();
+  if ($action == TRUE) {
+    $token = drupal_hash_base64(drupal_random_bytes(55));
+    $_SESSION['pass_reset_' . $user->uid] = $token;
+    drupal_goto("user/" . $user->uid . "/edit", array("query" => array("pass-reset-token" => $token)));
+  }
+  drupal_goto();
+}
 
 
 /**
  * Implements hook_user_insert().
  */
-  function duo_user_insert(&$edit, $account, $category) {
-    // Make sure the user is creating it, not an admin.
-    global $user;
-    if (!$user->name && function_exists('hash_hmac') && user_access('log in with duo', $account) && $skey && $ikey && $akey && $api) {
-      if (duo_generate_second_auth($account->name)){
-        drupal_exit();  
-      }
+function duo_user_insert(&$edit, $account, $category) {
+  // Make sure the user is creating it, not an admin.
+  global $user;
+  if (!$user->name && function_exists('hash_hmac') && user_access('log in with duo', $account) && $skey && $ikey && $akey && $api) {
+    if (duo_generate_second_auth($account->name)) {
+      drupal_exit();
     }
   }
+}
 
 /**
  * Implements hook_module_implements_alter().
  */
-  function duo_module_implements_alter(&$implementations, $hook) {
-    if ($hook == 'user_insert') {
-      $group = $implementations['duo'];
-      unset($implementations['duo']);
-      $implementations['duo'] = $group;
-    }
+function duo_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'user_insert') {
+    $group = $implementations['duo'];
+    unset($implementations['duo']);
+    $implementations['duo'] = $group;
   }
+}
 
 
 /**
- *  Administration  /  Navigation type functions.
+ * Administration  /  Navigation type functions.
  *
- *  The following functions are for menu items, help text and other functions that aren't critical to authenticating
- *  or processing user credentials.
+ *  The following functions are for menu items, help text and other functions
+ *  that aren't critical to authenticating or processing user credentials.
  *
- *  @see duo_help()
- *  @see duo_admin_config()
- *  @see duo_admin_config_validate()
- *  @see duo_menu()
- *  @see duo_permission()
+ * @see duo_help()
+ * @see duo_admin_config()
+ * @see duo_admin_config_validate()
+ * @see duo_menu()
+ * @see duo_permission()
  */
 
 
 /**
  * Implements hook_help().
  */
-  function  duo_help($path, $arg) {
-    switch ($path) {
-      case "admin/help#duo":
-        return _duo_generate_help();
-        break;
-    }
+function duo_help($path, $arg) {
+  switch ($path) {
+    case "admin/help#duo":
+      return _duo_generate_help();
   }
+}
 
 
 /**
  * Creates the required admin settings page.
  */
-  function duo_admin_config() {
-    include('duo_strings.php');
+function duo_admin_config() {
+  include 'duo_strings.php';
 
-    if (!function_exists('hash_hmac')) {
-      drupal_set_message($duo_error['php_invalid'], 'error');
-    }
-
-    $form['duo_integrationkey'] = array(
-      '#type' => 'textfield',
-      '#title' => $duo_titles['integration_key'],
-      '#default_value' => variable_get('duo_integrationkey', ''),
-      '#description' => $duo_descriptions['integration_key'],
-      '#required' => TRUE,
-    );
-
-    $form['duo_secretkey'] = array(
-      '#type' => 'textfield',
-      '#title' => $duo_titles['secret_key'],
-      '#default_value' => variable_get('duo_secretkey', ''),
-      '#description' => $duo_descriptions['secret_key'],
-      '#required' => TRUE,
-    );
-
-    $form['duo_apihostname'] = array(
-      '#type' => 'textfield',
-      '#title' => $duo_titles['api_hostname'],
-      '#default_value' => variable_get('duo_apihostname', ''),
-      '#description' => $duo_descriptions['api_hostname'],
-      '#required' => TRUE,
-    );
-
-    // Attempt to load a Duo iframe to show if it has been configured properly.
-    $ikey = variable_get('duo_integrationkey', '');
-    $skey = variable_get('duo_secretkey', '');
-    $api  = variable_get('duo_apihostname', '');
-
-    if ($ikey && $skey && $api) {
-      $form['duo_preview'] = array(
-        '#type' => 'item',
-        '#markup' => '<a href="' . url("duo_preview", array('absolute' => TRUE)) . '">' . $duo_titles['preview_url'] . '</a>',
-        '#title' => $duo_titles['form_preview'],
-        '#description' => $duo_descriptions['form_preview'],
-        );
-    }
-    return system_settings_form($form);
+  if (!function_exists('hash_hmac')) {
+    drupal_set_message($duo_error['php_invalid'], 'error');
   }
+
+  $form['duo_integrationkey'] = array(
+    '#type' => 'textfield',
+    '#title' => $duo_titles['integration_key'],
+    '#default_value' => variable_get('duo_integrationkey', ''),
+    '#description' => $duo_descriptions['integration_key'],
+    '#required' => TRUE,
+  );
+
+  $form['duo_secretkey'] = array(
+    '#type' => 'textfield',
+    '#title' => $duo_titles['secret_key'],
+    '#default_value' => variable_get('duo_secretkey', ''),
+    '#description' => $duo_descriptions['secret_key'],
+    '#required' => TRUE,
+  );
+
+  $form['duo_apihostname'] = array(
+    '#type' => 'textfield',
+    '#title' => $duo_titles['api_hostname'],
+    '#default_value' => variable_get('duo_apihostname', ''),
+    '#description' => $duo_descriptions['api_hostname'],
+    '#required' => TRUE,
+  );
+
+  // Attempt to load a Duo iframe to show if it has been configured properly.
+  $ikey = variable_get('duo_integrationkey', '');
+  $skey = variable_get('duo_secretkey', '');
+  $api  = variable_get('duo_apihostname', '');
+
+  if ($ikey && $skey && $api) {
+    $form['duo_preview'] = array(
+      '#type' => 'item',
+      '#markup' => '<a href="' . url("duo_preview", array('absolute' => TRUE)) . '">' . $duo_titles['preview_url'] . '</a>',
+      '#title' => $duo_titles['form_preview'],
+      '#description' => $duo_descriptions['form_preview'],
+    );
+  }
+  return system_settings_form($form);
+}
 
 /**
- *  Validates the admin config form.
+ * Validates the admin config form.
  */
-  function duo_admin_config_validate($form, &$form_state) {
-    include('duo_strings.php');
+function duo_admin_config_validate($form, &$form_state) {
+  include 'duo_strings.php';
 
-    $ikey = trim($form_state['values']['duo_integrationkey']);
-    $skey = trim($form_state['values']['duo_secretkey']);
-    $api  = trim($form_state['values']['duo_apihostname']);
+  $ikey = trim($form_state['values']['duo_integrationkey']);
+  $skey = trim($form_state['values']['duo_secretkey']);
+  $api  = trim($form_state['values']['duo_apihostname']);
 
-    // Verify the ikey length.
-    if (drupal_strlen($ikey) != 20) {
-      form_set_error('duo_integrationkey', $duo_error['invalid_ikey']);
-    }
-    // Verify skey length.
-    if (drupal_strlen($skey) != 40) {
-      form_set_error('duo_secretkey', $duo_error['invalid_skey']);
-    }
-    // Make sure url is at least long enough to be valid.
-    if (drupal_strlen($api) < 15) {
-      form_set_error('duo_apihostname', $duo_error['short_api']);
-    }
-
-    $form_state['values']['duo_integrationkey'] = $ikey;
-    $form_state['values']['duo_secretkey']      = $skey;
-    $form_state['values']['duo_apihostname']    = $api;
+  // Verify the ikey length.
+  if (drupal_strlen($ikey) != 20) {
+    form_set_error('duo_integrationkey', $duo_error['invalid_ikey']);
   }
+  // Verify skey length.
+  if (drupal_strlen($skey) != 40) {
+    form_set_error('duo_secretkey', $duo_error['invalid_skey']);
+  }
+  // Make sure url is at least long enough to be valid.
+  if (drupal_strlen($api) < 15) {
+    form_set_error('duo_apihostname', $duo_error['short_api']);
+  }
+
+  $form_state['values']['duo_integrationkey'] = $ikey;
+  $form_state['values']['duo_secretkey']      = $skey;
+  $form_state['values']['duo_apihostname']    = $api;
+}
 
 /**
  * Implements hook_menu().
  */
-  function duo_menu() {
-    include('duo_strings.php');
-    $items = array();
+function duo_menu() {
+  include 'duo_strings.php';
+  $items = array();
 
-     // Create the settings URL.
-    $items['admin/config/system/duo'] = array(
-       'title' => $duo_titles['config_form'],
-       'description' => $duo_descriptions['config_form'],
-       'page callback' => 'drupal_get_form',
-       'page arguments' => array('duo_admin_config'),
-       'access arguments' => array('administer users'),
-       'type' => MENU_NORMAL_ITEM,
-    );
+  // Create the settings URL.
+  $items['admin/config/system/duo'] = array(
+    'title' => $duo_titles['config_form'],
+    'description' => $duo_descriptions['config_form'],
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('duo_admin_config'),
+    'access arguments' => array('administer users'),
+    'type' => MENU_NORMAL_ITEM,
+  );
 
-    // Used as a preview for Duo, to ensure it was configured correctly.
-    $items['duo_preview'] = array(
-      'page callback' => 'duo_preview_second_auth',
-      'access arguments' => array('administer users'),
-      'type' => MENU_CALLBACK,
-     );
+  // Used as a preview for Duo, to ensure it was configured correctly.
+  $items['duo_preview'] = array(
+    'page callback' => 'duo_preview_second_auth',
+    'access arguments' => array('administer users'),
+    'type' => MENU_CALLBACK,
+  );
 
-     // Following used in 2-factor callback.
-    $items['duo_login_process'] = array(
-       'page callback' => 'duo_login_process',
-       'access callback' => TRUE,
-       'type' => MENU_CALLBACK
-    );
+  // Following used in 2-factor callback.
+  $items['duo_login_process'] = array(
+    'page callback' => 'duo_login_process',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
 
-    return $items;
-  }
+  return $items;
+}
 
 /**
  * Implements hook_permission().
  */
-  function duo_permission() {
-    include('duo_strings.php');
-    return array(
-      'log in with duo' => array(
-        'title' => $duo_titles['permission'],
-        'description' => $duo_descriptions['permission'],
-      )
-    );
-  }
+function duo_permission() {
+  include 'duo_strings.php';
+  return array(
+    'log in with duo' => array(
+      'title' => $duo_titles['permission'],
+      'description' => $duo_descriptions['permission'],
+    ),
+  );
+}
