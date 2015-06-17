@@ -284,3 +284,16 @@ function duo_permission() {
     ),
   );
 }
+
+/**
+ * Implements hook_menu_site_status_alter().
+ */
+function duo_menu_site_status_alter(&$menu_site_status, $path) {
+  $duo_paths = array(
+    'duo_login_process',
+    'duo_preview',
+  );
+  if ($menu_site_status == MENU_SITE_OFFLINE && in_array($path, $duo_paths)) {
+    $menu_site_status = MENU_SITE_ONLINE;
+  }
+}
