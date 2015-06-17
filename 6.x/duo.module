@@ -37,7 +37,7 @@ function duo_user($op, &$edit, &$account, $category = NULL) {
  * @return bool
  *    returns true on success, false otherwise.
  */
-function duo_generate_second_auth($name, $action) {
+function duo_generate_second_auth($name, $action = "") {
   $skey = variable_get('duo_secretkey', '');
   $ikey = variable_get('duo_integrationkey', '');
   $akey = variable_get('duo_applicationkey', '');
