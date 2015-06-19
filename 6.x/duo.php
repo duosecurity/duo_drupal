@@ -57,18 +57,29 @@ function generate_random_bytes($count) {
 /**
  * Generate Duo Login page header.
  */
-function _duo_generate_page($sig_req, $apihostname, $reset = FALSE) {
+function _duo_generate_page($sig_req, $api_hostname, $reset = FALSE) {
   ob_start();
 
   include 'resources/duo_header.php';
 
-  echo "\n\t<script src=\"" . base_path() . drupal_get_path('module', 'duo') . "/duo.js\" ></script>";
-  echo "\n\t<script>Duo.init({'host':'" . $apihostname . "','post_action':'" .
-    url("duo_login_process", array("absolute" => TRUE)) . "','sig_request':'" . $sig_req . "'});";
-  echo "\n\t</script>\n";
+  $duojs_path = base_path() . drupal_get_path('module', 'duo') . '/' . 'duo.js';
+  $adaptive_path = base_path() . drupal_get_path('module', 'duo') . '/' . 'adaptive.css';
+  $post_action = url("duo_login_process", array("absolute" => TRUE));
+  $iframe_attributes = array(
+    'id' => 'duo_iframe',
+    'data-host' => $api_hostname,
+    'data-sig-request' => $sig_req,
+    'data-post-action' => $post_action,
+    'frameborder' => '0',
+  );
+  $iframe_attributes = array_map(function($key, $value) {
+    return sprintf('%s="%s"', $key, $value);
+  }, array_keys($iframe_attributes), array_values($iframe_attributes));
+  $iframe_attributes = implode(" ", $iframe_attributes);
 
-  echo '<style> body {text-align: center;} iframe {width: 100%; min-width: 304px; max-width: 620px; height: 330px;}</style>';
-  echo '<iframe id="duo_iframe" frameborder="0"></iframe>';
+  echo "\n\t<script src=\"" . $duojs_path . "\" ></script>";
+  echo '<link rel="stylesheet" type="text/css" href="' . $adaptive_path . '">';
+  echo '<iframe ' . $iframe_attributes . '></iframe>';
   echo '<form id="duo_form" method="POST">' . "\n\t\t";
   echo '<input type="hidden" name="reset" value=' . $reset . ' />';
   echo "\n\t</form>";
