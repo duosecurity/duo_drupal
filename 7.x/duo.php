@@ -29,6 +29,14 @@ function generate_random_bytes($count) {
     fclose($fh);
   }
 
+  /**
+   * If we cannot read from urandom this will be our only source of
+   * "randomness." By no means is this cryptographically secure. However, we
+   * consider it safe for use here because it is a one time only event (on AKEY
+   * generation). An attacker cannot choose events which cause AKEY re-
+   * generation, and we consider it sufficiently hard to guess or predict
+   * the micro time of installation.
+   */
   $random_state = microtime();
 
   if (strlen($output) < $count) {
