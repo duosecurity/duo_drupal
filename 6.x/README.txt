@@ -1,7 +1,7 @@
 ** Duo Two-Factor Authentication Module **
 
 Drupal Version:  6.x
-Module Version: 1.6
+Module Version: 1.7
 Contributors:  Duo Security
 Contact:  info@duosecurity.com
 
@@ -39,6 +39,18 @@ Changelog
       between 6 & 7 module
 1.5 - Fixed bug where one time passcode wouldn't be protected via TFA
 1.6 - Add support for Duo's new enrollment frame.
+1.7 - Adaptive iframe, updated Duo Web PHP library, general cleanup.
+
+
+Maintenance/Offline Mode
+---------
+
+Unfortunately, Drupal 6 does not support the necessary APIs to enable offline
+mode with the Duo module. We recommend that you disable the Duo module before
+entering offline mode. If you're stuck in offline mode with the Duo module
+enabled then the following database command will manually disable it:
+
+UPDATE system SET status='0' WHERE name='duo';
 
 
 File List
@@ -53,6 +65,7 @@ File List
     duo_strings.php
     duo_web.php
     README.txt
+    adaptive.css
     resources /
       960.css
       custom.css
