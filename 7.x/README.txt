@@ -1,7 +1,7 @@
 ** Duo Two-Factor Authentication Module **
 
 Drupal Version:  7.x
-Module Version: 1.10
+Module Version: 1.11
 Contributors:  Duo Security
 Contact:  info@duosecurity.com
 
@@ -41,7 +41,8 @@ Changelog
 1.7 - Bug fix, fix an issue with password resets.
 1.8 - Add support for Duo's new enrollment frame.
 1.9 - Adaptive iframe, updated Duo Web PHP library, Offline mode support, general cleanup.
-1.10 - Update DuoWeb SDK to version 2.6
+1.10 - Update DuoWeb SDK to version 2.3
+1.11 - Update DuoWeb SDK to version 2.6
 
 
 File List
