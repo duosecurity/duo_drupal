@@ -23,6 +23,10 @@ function generate_random_string() {
  * back on hashing microtime.
  */
 function generate_random_bytes($count) {
+  if (function_exists('random_bytes')) {
+    return random_bytes($count);
+  }
+
   $output = '';
   if (is_readable('/dev/urandom') && ($fh = @fopen('/dev/urandom', 'rb'))) {
     $output = fread($fh, $count);
