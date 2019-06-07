@@ -35,12 +35,13 @@ Changelog
 1.2 - Bug fix, fixed other naming and translation issues.
 1.3 - Updated SDK
 1.4 - Major overhaul of the login method.  Adds custom styling ability.
-      Moves preview form to new page.  Uses a php include for naming consistancy 
+      Moves preview form to new page.  Uses a php include for naming consistancy
       between 6 & 7 module
 1.5 - Fixed bug where one time passcode wouldn't be protected via TFA
 1.6 - Add support for Duo's new enrollment frame.
 1.7 - Adaptive iframe, updated Duo Web PHP library, general cleanup.
 1.8 - Update DuoWeb SDK to version 2.6
+1.9 - Update DuoWeb SDK to version 2.8
 
 
 Maintenance/Offline Mode
