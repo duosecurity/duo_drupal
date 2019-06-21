@@ -35,7 +35,7 @@ Changelog
 1.2 - Bug fix, altered names, update SDK.
 1.3 - Bug fix, Fixed SDK update.
 1.4 - Bug fix, naming + translation issues.
-1.5 - Major update to login method, add support for custom login style, moved preview to new page, 
+1.5 - Major update to login method, add support for custom login style, moved preview to new page,
       and adds a duo_strings for constistant naming between the 6.x and 7.x module
 1.6 - Bug fix, fix permissions typo, protect forgot password with TFA
 1.7 - Bug fix, fix an issue with password resets.
@@ -43,6 +43,7 @@ Changelog
 1.9 - Adaptive iframe, updated Duo Web PHP library, Offline mode support, general cleanup.
 1.10 - Update DuoWeb SDK to version 2.3
 1.11 - Update DuoWeb SDK to version 2.6
+1.12 - Update DuoWeb SDK to version 2.8
 
 
 File List
