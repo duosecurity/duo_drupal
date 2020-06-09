@@ -1,4 +1,5 @@
 # Overview
+:exclamation: **This project is no longer being actively developed or maintained and will reach end of support on 9/7/2020.**
 
 [![Issues](https://img.shields.io/github/issues/duosecurity/duo_drupal)](https://github.com/duosecurity/duo_drupal/issues)
 [![Forks](https://img.shields.io/github/forks/duosecurity/duo_drupal)](https://github.com/duosecurity/duo_drupal/network/members)
