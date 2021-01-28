@@ -1,5 +1,5 @@
 # Overview
-:exclamation: **This project is no longer being actively developed or maintained and will reach end of support late 2020.**
+:exclamation: **Support for Duo's two-factor solution for Drupal 6 and 7 ended on January 28, 2021.**
 
 [![Issues](https://img.shields.io/github/issues/duosecurity/duo_drupal)](https://github.com/duosecurity/duo_drupal/issues)
 [![Forks](https://img.shields.io/github/forks/duosecurity/duo_drupal)](https://github.com/duosecurity/duo_drupal/network/members)
@@ -14,11 +14,4 @@ This Drupal module allows you to quickly add Duo's interactive, self-service, tw
 
 Documentation: <http://www.duosecurity.com/docs/drupal>
 
-# Support
-
-Report any bugs, feature requests, etc. to us directly:
-support@duosecurity.com
-
-Have fun!
-
-<http://www.duosecurity.com>
+<http://www.duo.com>
